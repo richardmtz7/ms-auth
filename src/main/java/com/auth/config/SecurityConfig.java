@@ -15,6 +15,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.auth.config.filter.JwtTokenValidator;
 import com.auth.service.impl.UserDetailServiceImpl;
@@ -22,7 +24,7 @@ import com.auth.utils.JwtUtils;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig {
+public class SecurityConfig implements WebMvcConfigurer {
 	
 	@Autowired
     private JwtUtils jwtUtils;
@@ -34,6 +36,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(http -> {
                     http.requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll();
+                    http.requestMatchers(HttpMethod.OPTIONS, "/api/auth/**").permitAll();
 
                     http.requestMatchers(HttpMethod.GET, "/api/business/**").hasAuthority("READ");
                     http.requestMatchers(HttpMethod.POST, "/api/business/**").hasAuthority("CREATE");
@@ -44,6 +47,15 @@ public class SecurityConfig {
                 })
                 .addFilterBefore(new JwtTokenValidator(jwtUtils), BasicAuthenticationFilter.class)
                 .build();
+    }
+	
+	@Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+            .allowedOrigins("http://localhost:5173/")
+            .allowedMethods("GET", "POST", "PUT", "DELETE")
+            .allowedHeaders("*")
+            .allowCredentials(true);
     }
 	
 	@Bean

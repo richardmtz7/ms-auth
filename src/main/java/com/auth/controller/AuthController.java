@@ -23,7 +23,7 @@ public class AuthController {
     private UserDetailServiceImpl userDetailService;
 	
 	@PostMapping("/sign-up")
-    public ResponseEntity<AuthResponse> register(@RequestBody @Valid AuthCreateUserRequest userRequest){
+    public ResponseEntity<String> register(@RequestBody @Valid AuthCreateUserRequest userRequest){
         return new ResponseEntity<>(this.userDetailService.createUser(userRequest), HttpStatus.CREATED);
     }
 

@@ -57,9 +57,9 @@ public class UserDetailServiceImpl implements UserDetailsService {
 	}
 	
 	@Transactional
-	public AuthResponse createUser(AuthCreateUserRequest createRoleRequest) {
+	public String createUser(AuthCreateUserRequest createRoleRequest) {
 
-        String username = createRoleRequest.email();
+        String email = createRoleRequest.email();
         String password = createRoleRequest.password();
         String name = createRoleRequest.name();
         List<String> rolesRequest = createRoleRequest.roleRequest().roleListName();
@@ -73,39 +73,37 @@ public class UserDetailServiceImpl implements UserDetailsService {
         UserEntity userEntity = UserEntity.builder()
         		.name(name)
         		.password(passwordEncoder.encode(password))
-        		.email(username)
+        		.email(email)
+        		.roleId(rolesRequest.get(0))
         		.roles(roleEntityList)
         		.status(1)
         		.build();
 
         userRepository.save(userEntity);
         
-        AuthResponse authResponse = new AuthResponse(username, "User created successfully", true, "");
-        
-        return authResponse;
+        return "User created successfully";
     }
 	
 	public AuthResponse loginUser(AuthLoginRequest authLoginRequest) {
 
         String email = authLoginRequest.email();
         String password = authLoginRequest.password();
-
         Authentication authentication = this.authenticate(email, password);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        
         String accessToken = jwtUtils.createToken(authentication);
-        
-        AuthResponse authResponse = new AuthResponse(email, "User loged succesfully", true, accessToken);
+        UserEntity userLogin = userRepository.findByEmail(email);
+        int userId = userLogin.getUserId();
+        String role = userLogin.getRoleId();
+        AuthResponse authResponse = new AuthResponse(userId, email, "User loged succesfully", role , true, accessToken);
+     
         return authResponse;
     }
 
 	public Authentication authenticate(String username, String password) {
         UserDetails userDetails = this.loadUserByUsername(username);
-
         if (userDetails == null) {
             throw new BadCredentialsException(String.format("Invalid username or password"));
         }
-
         if (!passwordEncoder.matches(password, userDetails.getPassword())) {
             throw new BadCredentialsException("Incorrect Password");
         }
